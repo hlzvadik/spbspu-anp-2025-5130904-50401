@@ -110,7 +110,7 @@ namespace goltsov
       }
       return * this;
     }
-    ~Rubber() override = default;
+    ~Rubber() = default;
     double getArea() const override;
     rectangle_t getFrameRect() const override;
     void move(point_t) override;
@@ -119,6 +119,104 @@ namespace goltsov
   private:
     double r1, r2;
     point_t pos1, pos2;
+  };
+  point_t polygonCentroid(const point_t* mtx, int n)
+  {
+    if (n < 3)
+    {
+        point_t center = {0, 0};
+        if (n > 0) {
+            for (int i = 0; i < n; i++)
+            {
+                center.x += mtx[i].x;
+                center.y += mtx[i].y;
+            }
+            center.x /= n;
+            center.y /= n;
+        }
+        return center;
+    }
+    double area = 0.0;
+    double centroid_x = 0.0;
+    double centroid_y = 0.0;
+    for (int i = 0; i < n; i++)
+    {
+        int j = (i + 1) % n;
+        double cross = (mtx[i].x * mtx[j].y - mtx[j].x * mtx[i].y);
+        area += cross;
+        centroid_x += (mtx[i].x + mtx[j].x) * cross;
+        centroid_y += (mtx[i].y + mtx[j].y) * cross;
+    }
+    area *= 0.5;
+    double factor = 1.0 / (6.0 * area);
+    point_t centroid;
+    centroid.x = centroid_x * factor;
+    centroid.y = centroid_y * factor;
+    return centroid;
+  }
+  struct Polygon : Shape
+  {
+    Polygon(point_t* mtx, size_t n):
+      mtx(mtx), n(n), pos(polygonCentroid(mtx, n))
+    {
+      if (n < 3)
+      {
+        throw std::logic_error("The polygon must have at least 3 vertices");
+      }
+    }
+    Polygon(Polygon& other):
+      n(other.n), pos(other.pos)
+    {
+      mtx = new point_t[n];
+      for (size_t i = 0; i < n; ++i)
+      {
+        mtx[i] = other.mtx[i];
+      }
+    }
+    Polygon(Polygon&& other):
+      n(std::move(other.n)), pos(other.pos)
+    {
+      mtx = other.mtx;
+      other.mtx = nullptr;
+    }
+    Polygon& operator=(Polygon& other)
+    {
+      if (this != &other)
+      {
+        mtx = new point_t[n];
+        for (size_t i = 0; i < n; ++i)
+        {
+          mtx[i] = other.mtx[i];
+        }
+        n = other.n;
+        pos = other.pos;
+      }
+      return * this;
+    }
+    Polygon& operator=(Polygon&& other)
+    {
+      if (this != &other)
+      {
+        mtx = other.mtx;
+        other.mtx = nullptr;
+        n = other.n;
+        pos = other.pos;
+      }
+      return * this;
+    }
+    ~Polygon()
+    {
+      delete[] mtx;
+    }
+    double getArea() const override;
+    rectangle_t getFrameRect() const override;
+    void move(point_t) override;
+    void move(double, double) override;
+    void scale(double k) override;
+  private:
+    point_t* mtx = nullptr;
+    size_t n;
+    point_t pos;
   };
 }
 
@@ -186,4 +284,64 @@ void goltsov::Rubber::scale(double k)
   double dy = pos1.y - pos2.y;
   pos1.x = pos2.x + k * dx;
   pos1.y = pos2.y + k * dy;
+}
+
+double goltsov::Polygon::getArea() const
+{
+    if (n < 3) return 0.0;
+    double area = 0.0;
+    for (int i = 0; i < n; i++)
+    {
+        int j = (i + 1) % n;
+        area += mtx[i].x * mtx[j].y - mtx[j].x * mtx[i].y;
+    }
+    return fabs(area) * 0.5;
+}
+goltsov::rectangle_t goltsov::Polygon::getFrameRect() const
+{
+  double max_x = mtx[0].x;
+  double min_x = mtx[0].x;
+  double max_y = mtx[0].y;
+  double min_y = mtx[0].y;
+  for (size_t i = 0; i < n; ++i)
+  {
+    max_x = (max_x < mtx[i].x ? mtx[i].x : max_x);
+    min_x = (min_x > mtx[i].x ? mtx[i].x : min_x);
+    max_y = (max_y < mtx[i].y ? mtx[i].y : max_y);
+    min_x = (min_y > mtx[i].y ? mtx[i].y : min_y);
+  }
+  return {max_x - min_x, max_y - min_y, {(max_x + min_x)/2, (max_y + min_y)/2}};
+}
+void goltsov::Polygon::move(goltsov::point_t newPos)
+{
+  double dx = newPos.x - pos.x;
+  double dy = newPos.y - pos.y;
+  for (size_t i = 0; i < n; ++i)
+  {
+    mtx[i].x += dx;
+    mtx[i].y += dy;
+  }
+  pos = newPos;
+}
+void goltsov::Polygon::move(double dx, double dy)
+{
+  for (size_t i = 0; i < n; ++i)
+  {
+    mtx[i].x += dx;
+    mtx[i].y += dy;
+  }
+  pos.x += dx;
+  pos.y += dy;
+}
+void goltsov::Polygon::scale(double k)
+{
+  for (size_t i = 0; i < n; ++i)
+  {
+    double dx = mtx[i].x - pos.x;
+    double dy = mtx[i].y - pos.y;
+    dx *= k;
+    dy *= k;
+    mtx[i].x = pos.x + dx;
+    mtx[i].y = pos.y + dy;
+  }
 }
