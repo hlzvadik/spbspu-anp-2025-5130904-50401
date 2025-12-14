@@ -238,6 +238,7 @@ int main()
   a.move({1,1});
   a.move(2,2);
   a.scale(2.0);
+  std::cout << a1 << ' ' << a2.width << '-' << a2.height << '-' << a2.pos.x << '-' << a2.pos.y << '\n';
 
   Rubber b = {4.4, {1, 1}, 1.1, {1.1, 1.1}};
   double b1 = b.getArea();
@@ -245,6 +246,7 @@ int main()
   b.move({3,3});
   b.move(3,3);
   b.scale(2.5);
+  std::cout << b1 << ' ' << b2.width << '-' << b2.height << '-' << b2.pos.x << '-' << b2.pos.y << '\n';
 
   point_t mas[5] = {{0, 0}, {1, 0}, {2, 2}, {2, 3}, {1, 4}};
   Polygon c = {mas, 5};
@@ -253,6 +255,7 @@ int main()
   c.move({1, 1});
   c.move(2,2);
   c.scale(1.1);
+  std::cout << c1 << ' ' << c2.width << '-' << c2.height << '-' << c2.pos.x << '-' << c2.pos.y << '\n';
 }
 
 double goltsov::Rectangle::getArea() const
