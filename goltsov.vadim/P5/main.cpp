@@ -321,7 +321,7 @@ int main()
     f = 1;
 
     std::cout << "For x = " << point_a.x << "; y = " << point_a.y << "; k = " << k << '\n';
-  
+
     for (size_t i = 0; i < count; ++i)
     {
       scaleRelativePoint(mas2[i], point_a, k);
