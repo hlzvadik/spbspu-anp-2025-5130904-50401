@@ -296,16 +296,20 @@ int main()
   Shape* mas2[count] = {&a, &b, &c};
   point_t point_a;
   double k;
-  std::cin >> point_a.x >> point_a.y >> k;
+  if ((!(std::cin >> point_a.x) || !(std::cin >> point_a.y) || !(std::cin >> k)) && std::cin.eof())
+  {
+    std::cout << "No input\n";
+    return 2;
+  }
   if (std::cin.fail() || std::cin.bad())
   {
     std::cerr << "Bad input\n";
-    return 1;
+    return 2;
   }
   if (k <= 0)
   {
     std::cerr << "The zoom level must be greater than 0\n";
-    return 1;
+    return 2;
   }
 
   std::cout << "Before changes:\n";
