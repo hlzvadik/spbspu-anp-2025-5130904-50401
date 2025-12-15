@@ -296,7 +296,8 @@ int main()
   Shape* mas2[count] = {&a, &b, &c};
   point_t point_a;
   double k;
-  if ((!(std::cin >> point_a.x) || !(std::cin >> point_a.y) || !(std::cin >> k)) && std::cin.eof())
+  std::cin >> point_a.x >> point_a.y >> k;
+  if (std::cin.eof())
   {
     std::cout << "No input\n";
     return 2;
