@@ -64,12 +64,12 @@ namespace goltsov
     void move(const double, const double) override;
     void scale(const double k) override;
   private:
-      rectangle_t a;
+    rectangle_t a;
   };
   struct Rubber : Shape
   {
-    Rubber(const double r1, const point_t pos1, const double r2, const point_t pos2):
-      r1(r1), r2(r2), pos1(pos1), pos2(pos2)
+    Rubber(const double r10, const point_t pos10, const double r20, const point_t pos20):
+      r1(r10), r2(r20), pos1(pos10), pos2(pos20)
     {
       if (r1 <= 0 || r2 <= 0)
       {
@@ -158,8 +158,8 @@ namespace goltsov
   }
   struct Polygon : Shape
   {
-    Polygon(const point_t* mtx, const size_t n):
-      n(n), pos(polygonCentroid(mtx, n))
+    Polygon(const point_t* mtx0, const size_t n0):
+      n(n0), pos(polygonCentroid(mtx0, n))
     {
       if (n < 3)
       {
@@ -168,7 +168,7 @@ namespace goltsov
       this->mtx = new point_t[n];
       for (size_t i = 0; i < n; ++i)
       {
-        this->mtx[i] = mtx[i];
+        this->mtx[i] = mtx0[i];
       }
     }
     Polygon(const Polygon& other):
@@ -227,35 +227,99 @@ namespace goltsov
     size_t n;
     point_t pos;
   };
+  void scaleRelativePoint(goltsov::Shape* a, goltsov::point_t p, double k);
+  void totalPrint(size_t count, Shape** mas2, std::ostream & outp);
+}
+
+void goltsov::scaleRelativePoint(goltsov::Shape* a, goltsov::point_t p, double k)
+{
+  point_t p1 = a->getFrameRect().pos;
+  a->move(p);
+  a->scale(k);
+  point_t p2 = a->getFrameRect().pos;
+  double dx = p1.x - p2.x;
+  double dy = p1.y - p2.y;
+  dx *= k;
+  dy *= k;
+  a->move(dx, dy);
+}
+
+void goltsov::totalPrint(size_t count, Shape** mas2, std::ostream & outp)
+{
+  double total_area = 0;
+  outp << "Areas:\n";
+  for (size_t i = 0; i < count; ++i)
+  {
+    outp << mas2[i]->getArea() << '\n';
+    total_area += mas2[i]->getArea();
+  }
+  outp << "Total area:\n";
+  outp << total_area << '\n' << '\n';
+
+  rectangle_t total_rec = mas2[0]->getFrameRect();
+  double left_x = total_rec.pos.x - total_rec.width/2;
+  double right_x = total_rec.pos.x + total_rec.width/2;
+  double down_y = total_rec.pos.y - total_rec.height/2;
+  double up_y = total_rec.pos.y + total_rec.height/2;
+  outp << "Frame rectangles:\n";
+  for (size_t i = 0; i < count; ++i)
+  {
+    rectangle_t a = mas2[i]->getFrameRect();
+    outp << a.width << ' ' << a.height << ' ' << a.pos.x << " - " << a.pos.y << '\n';
+
+    double left_xi = a.pos.x - a.width/2;
+    double right_xi = a.pos.x + a.width/2;
+    double down_yi = a.pos.y - a.height/2;
+    double up_yi = a.pos.y + a.height/2;
+    left_x = left_xi < left_x ? left_xi : left_x;
+    right_x = right_xi > right_x ? right_xi : right_x;
+    down_y = down_yi < down_y ? down_yi : down_y;
+    up_y = up_yi > up_y ? up_yi : up_y;
+
+    total_rec = {right_x - left_x, up_y - down_y, {(left_x + right_x)/2, (up_y + down_y)/2}};
+  }
+  outp << "Total frame rectangle:\n";
+  outp << total_rec.width << ' ' << total_rec.height << ' ' << total_rec.pos.x << " - " << total_rec.pos.y << '\n';
 }
 
 int main()
 {
   using namespace goltsov;
   Rectangle a = {1, 5, {2, 3}};
-  double a1 = a.getArea();
-  rectangle_t a2 = a.getFrameRect();
-  a.move({1,1});
-  a.move(2,2);
-  a.scale(2.0);
-  std::cout << a1 << ' ' << a2.width << '-' << a2.height << '-' << a2.pos.x << '-' << a2.pos.y << '\n';
 
   Rubber b = {4.4, {1, 1}, 1.1, {1.1, 1.1}};
-  double b1 = b.getArea();
-  rectangle_t b2 = b.getFrameRect();
-  b.move({3,3});
-  b.move(3,3);
-  b.scale(2.5);
-  std::cout << b1 << ' ' << b2.width << '-' << b2.height << '-' << b2.pos.x << '-' << b2.pos.y << '\n';
 
   point_t mas[5] = {{0, 0}, {1, 0}, {2, 2}, {2, 3}, {1, 4}};
   Polygon c = {mas, 5};
-  double c1 = c.getArea();
-  rectangle_t c2 = c.getFrameRect();
-  c.move({1, 1});
-  c.move(2,2);
-  c.scale(1.1);
-  std::cout << c1 << ' ' << c2.width << '-' << c2.height << '-' << c2.pos.x << '-' << c2.pos.y << '\n';
+
+  size_t count = 3;
+  Shape* mas2[count] = {&a, &b, &c};
+  point_t point_a;
+  double k;
+  std::cin >> point_a.x >> point_a.y >> k;
+  if (std::cin.fail() || std::cin.bad())
+  {
+    std::cerr << "Bad input\n";
+    return 1;
+  }
+  if (k <= 0)
+  {
+    std::cerr << "The zoom level must be greater than 0\n";
+    return 1;
+  }
+
+  std::cout << "Before changes:\n";
+  totalPrint(count, mas2, std::cout);
+
+  std::cout << "\n\n";
+
+  for (size_t i = 0; i < count; ++i)
+  {
+    scaleRelativePoint(mas2[i], point_a, k);
+  }
+
+  std::cout << "After changes:\n";
+  totalPrint(count, mas2, std::cout);
 }
 
 double goltsov::Rectangle::getArea() const
@@ -277,6 +341,10 @@ void goltsov::Rectangle::move(const double dx, const double dy)
 }
 void goltsov::Rectangle::scale(const double k)
 {
+  if (k <= 0)
+  {
+    throw std::logic_error("The zoom level must be greater than 0");
+  }
   a.height *= k;
   a.width *= k;
 }
@@ -306,6 +374,10 @@ void goltsov::Rubber::move(const double dx, const double dy)
 }
 void goltsov::Rubber::scale(const double k)
 {
+  if (k <= 0)
+  {
+    throw std::logic_error("The zoom level must be greater than 0");
+  }
   r1 *= k;
   r2 *= k;
   double dx = pos1.x - pos2.x;
@@ -363,6 +435,10 @@ void goltsov::Polygon::move(const double dx, const double dy)
 }
 void goltsov::Polygon::scale(const double k)
 {
+  if (k <= 0)
+  {
+    throw std::logic_error("The zoom level must be greater than 0");
+  }
   for (size_t i = 0; i < n; ++i)
   {
     double dx = mtx[i].x - pos.x;
