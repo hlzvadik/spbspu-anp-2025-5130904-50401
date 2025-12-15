@@ -296,35 +296,51 @@ int main()
   Shape* mas2[count] = {&a, &b, &c};
   point_t point_a;
   double k;
-  std::cin >> point_a.x >> point_a.y >> k;
-  if (std::cin.eof() && std::cin.fail())
-  {
-    std::cerr << "No input\n";
-    return 2;
-  }
-  if (std::cin.fail() || std::cin.bad())
-  {
-    std::cerr << "Bad input\n";
-    return 2;
-  }
-  if (k <= 0)
-  {
-    std::cerr << "The zoom level must be greater than 0\n";
-    return 2;
-  }
 
   std::cout << "Before changes:\n";
   totalPrint(count, mas2, std::cout);
 
   std::cout << "\n\n";
 
-  for (size_t i = 0; i < count; ++i)
-  {
-    scaleRelativePoint(mas2[i], point_a, k);
-  }
+  bool f = 0;
 
-  std::cout << "After changes:\n";
-  totalPrint(count, mas2, std::cout);
+  std::cout << "Enter x, y, k:\n";
+  while(std::cin >> point_a.x >> point_a.y >> k)
+  {
+    if (std::cin.fail() || std::cin.bad())
+    {
+      std::cerr << "Bad input\n";
+      return 1;
+    }
+    if (k <= 0)
+    {
+      std::cerr << "The zoom level must be greater than 0\n";
+      return 1;
+    }
+
+    f = 1;
+
+    std::cout << "For x = " << point_a.x << "; y = " << point_a.y << "; k = " << k << '\n';
+  
+    for (size_t i = 0; i < count; ++i)
+    {
+      scaleRelativePoint(mas2[i], point_a, k);
+    }
+
+    totalPrint(count, mas2, std::cout);
+    std::cout << "\n\n";
+    std::cout << "Enter x, y, k:\n";
+  }
+  if ((std::cin.fail() || std::cin.bad()) && !std::cin.eof())
+  {
+    std::cerr << "Bad input\n";
+    return 1;
+  }
+  if (std::cin.eof() && !f)
+  {
+    std::cerr << "No input\n";
+    return 1;
+  }
 }
 
 double goltsov::Rectangle::getArea() const
