@@ -297,9 +297,9 @@ int main()
   point_t point_a;
   double k;
   std::cin >> point_a.x >> point_a.y >> k;
-  if (std::cin.eof())
+  if (std::cin.eof() && std::cin.fail())
   {
-    std::cout << "No input\n";
+    std::cerr << "No input\n";
     return 2;
   }
   if (std::cin.fail() || std::cin.bad())
